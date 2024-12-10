@@ -2901,6 +2901,7 @@ class PdfArranger(Gtk.Application):
         pyv = "{}.{}.{}".format(
             sys.version_info.major, sys.version_info.minor, sys.version_info.micro
         )
+        platform = self.get_platform()
         about_dialog.set_comments(
             "".join(
                 (
@@ -2910,10 +2911,15 @@ class PdfArranger(Gtk.Application):
                     _("It uses libqpdf %s, pikepdf %s, GTK %s and Python %s.")
                     % (qpdf, pike, gtkv, pyv),
                     "\n \n",
-                    _("Running on %s") % self.get_platform(),
+                    _("Running on %s") % platform,
                 )
             )
         )
+        about_dialog.versions = (f"{APPNAME} {VERSION}\n"
+                                 f"pikepdf {pike} (qpfd {qpdf})\n"
+                                 f"GTK {gtkv}\n"
+                                 f"Python {pyv}\n"
+                                 f"OS {platform}\n")
         about_dialog.set_authors(['Konstantinos Poulios'])
         about_dialog.add_credit_section(_('Maintainers and contributors'), [
             'https://github.com/pdfarranger/pdfarranger/graphs/contributors'])
@@ -2921,9 +2927,16 @@ class PdfArranger(Gtk.Application):
         about_dialog.set_website_label(WEBSITE)
         about_dialog.set_logo_icon_name(ICON_ID)
         about_dialog.set_license(_('GNU General Public License (GPL) Version 3.'))
-        about_dialog.connect('response', lambda w, *args: w.destroy())
+        about_dialog.add_button(_('Copy to clipboard'), 1)
+        about_dialog.connect('response', self.on_about_response)
         about_dialog.connect('delete_event', lambda w, *args: w.destroy())
         about_dialog.show_all()
+
+    def on_about_response(self, dialog, response):
+        if response == 1:
+            self.clipboard.set_text(dialog.versions, -1)
+            #clipboard.store()  # not needed on Windows
+        dialog.destroy()
 
     def update_statusbar(self):
         selection = self.iconview.get_selected_items()
